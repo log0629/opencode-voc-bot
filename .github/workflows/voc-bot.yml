@@ -73,6 +73,7 @@ jobs:
         if: github.event_name == 'issues'
         env:
           BOT_PAT: ${{ secrets.BOT_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           ASSIGNEE=$(python3 -c "
           import configparser, random
@@ -82,11 +83,19 @@ jobs:
           print(random.choice(users))
           ")
           echo "Assigning to: $ASSIGNEE"
-          curl -s -X POST \
-            -H "Authorization: token $BOT_PAT" \
+          TOKEN="${BOT_PAT:-$GITHUB_TOKEN}"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: token $TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees" \
-            -d "{\"assignees\": [\"${ASSIGNEE}\"]}" || true
+            -d "{\"assignees\": [\"${ASSIGNEE}\"]}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "::warning::Failed to assign $ASSIGNEE (HTTP $HTTP_CODE): $BODY"
+          else
+            echo "Successfully assigned $ASSIGNEE"
+          fi
 
       - name: Add label if escalation needed
         env:
