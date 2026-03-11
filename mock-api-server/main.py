@@ -201,6 +201,35 @@ async def get_models(jwt_data: Tuple = Depends(JWTBearer())):
     return models
 
 
+def _convert_messages_to_ollama(messages: list[ChatMessage]) -> list[dict]:
+    """OpenAI format messages를 Ollama format으로 변환."""
+    result = []
+    for msg in messages:
+        m = {"role": msg.role}
+        if msg.content is not None:
+            m["content"] = msg.content if isinstance(msg.content, str) else json.dumps(msg.content)
+        if msg.tool_calls:
+            converted_calls = []
+            for tc in msg.tool_calls:
+                args = tc.function.get("arguments", {})
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except (json.JSONDecodeError, TypeError):
+                        args = {}
+                converted_calls.append({
+                    "function": {
+                        "name": tc.function.get("name", ""),
+                        "arguments": args,
+                    }
+                })
+            m["tool_calls"] = converted_calls
+        if msg.tool_call_id:
+            m["tool_call_id"] = msg.tool_call_id
+        result.append(m)
+    return result
+
+
 @app.post("/v1/chat/completions")
 async def chat_completions(
     request: ChatCompletionRequest,
@@ -224,7 +253,7 @@ async def chat_completions(
     ollama_model = MODEL_MAPPING.get(request.model, request.model)
     logger.info(f"  -> Ollama Model: {ollama_model}")
 
-    messages = _convert_messages(request.messages)
+    messages = _convert_messages_to_ollama(request.messages)
     tools = [t.model_dump() for t in request.tools] if request.tools else None
 
     try:
