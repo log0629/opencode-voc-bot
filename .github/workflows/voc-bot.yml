@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup gh for GitHub Enterprise
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --hostname "${{ github.server_url }}" --with-token
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --hostname github.samsungds.net --with-token
         env:
           GH_PROMPT_DISABLED: true
 
