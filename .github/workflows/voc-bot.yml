@@ -26,7 +26,7 @@ jobs:
           GH_PROMPT_DISABLED: true
 
       - name: Install dependencies
-        run: pip3 install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run VOC Bot (new issue)
         if: github.event_name == 'issues'
