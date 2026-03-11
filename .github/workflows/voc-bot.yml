@@ -25,13 +25,8 @@ jobs:
         env:
           GH_PROMPT_DISABLED: true
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip3 install -r requirements.txt
 
       - name: Run VOC Bot (new issue)
         if: github.event_name == 'issues'
@@ -43,7 +38,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          python -m src.main \
+          python3 -m src.main \
             -t "$ISSUE_TITLE" \
             -b "$ISSUE_BODY" \
             > response.txt 2>&1 || true
@@ -59,7 +54,7 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          python -m src.main \
+          python3 -m src.main \
             -t "$ISSUE_TITLE" \
             -b "$ISSUE_BODY" \
             -c "$COMMENT_BODY" \
@@ -78,7 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
-          ASSIGNEE=$(python -c "
+          ASSIGNEE=$(python3 -c "
           import configparser, random
           c = configparser.ConfigParser()
           c.read('config.ini')
