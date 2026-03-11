@@ -51,9 +51,10 @@ async def test_fetch_and_format_pipeline(httpx_mock):
         escalation_needed=False,
     )
 
-    output = format_output(response)
+    output = format_output(response, docs_base_url="http://localhost:4321/docs")
     assert "CLI Guide" in output
     assert "### 참고 문서" in output
+    assert "http://localhost:4321/docs/cli" in output
     assert "Confidence: sufficient" in output
 
 

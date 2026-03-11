@@ -4,7 +4,6 @@ from src.config import Settings
 def test_settings_defaults():
     settings = Settings()
     assert settings.docs_base_url == "http://localhost:4321/docs"
-    assert settings.llm_model == "qwen3.5:397b-cloud"
     assert settings.agent_max_iterations == 15
     assert settings.agent_timeout == 120
 

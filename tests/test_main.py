@@ -21,10 +21,10 @@ def test_format_output_korean():
         confidence="sufficient",
         escalation_needed=False,
     )
-    output = format_output(response)
+    output = format_output(response, docs_base_url="http://localhost:4321/docs")
     assert "MCP 서버는 설정 파일에서 구성할 수 있습니다." in output
     assert "### 참고 문서" in output
-    assert "[MCP Servers](/docs/mcp-servers)" in output
+    assert "[MCP Servers](http://localhost:4321/docs/mcp-servers)" in output
     assert "Confidence: sufficient" in output
 
 
@@ -35,8 +35,21 @@ def test_format_output_english():
         confidence="sufficient",
         escalation_needed=False,
     )
-    output = format_output(response)
+    output = format_output(response, docs_base_url="http://localhost:4321/docs")
     assert "### References" in output
+    assert "http://localhost:4321/docs/mcp-servers" in output
+
+
+def test_format_output_full_url_passthrough():
+    """이미 full URL인 경우 그대로 유지."""
+    response = VocResponse(
+        answer="설정 방법입니다.",
+        references=[Reference(title="CLI", url="http://localhost:4321/docs/cli")],
+        confidence="sufficient",
+        escalation_needed=False,
+    )
+    output = format_output(response, docs_base_url="http://localhost:4321/docs")
+    assert "http://localhost:4321/docs/cli" in output
 
 
 def test_format_output_escalation():

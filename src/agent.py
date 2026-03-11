@@ -43,13 +43,23 @@ from GitHub issues based STRICTLY on the official documentation.
 
 ## Answer Format
 
-For Korean:
-- 답변 본문에 인라인 인용: "~할 수 있습니다 ([문서 제목](URL) 참고)."
-- 하단에 "### 참고 문서" 섹션
+IMPORTANT: The "answer" field must contain ONLY the main answer body with inline citations. \
+Do NOT include a references section (like "### 참고 문서" or "### References") in the answer. \
+The references section will be automatically generated from the "references" field.
 
-For English:
-- Inline citations: "You can configure this ([Doc Title](URL))."
-- Bottom section: "### References"
+For inline citations, always use the FULL URL based on the docs base URL ({docs_base_url}):
+- Korean docs URL: {docs_base_url}/page-name (e.g., {docs_base_url}/mcp-servers)
+- English docs URL: {docs_base_url}/en/page-name (e.g., {docs_base_url}/en/mcp-servers)
+
+Choose the URL language based on the user's question language:
+- Korean question → use Korean docs URL ({docs_base_url}/page-name)
+- English question → use English docs URL ({docs_base_url}/en/page-name)
+
+Examples:
+- Korean: "~할 수 있습니다 ([MCP 서버]({docs_base_url}/mcp-servers) 참고)."
+- English: "You can configure this ([MCP Servers]({docs_base_url}/en/mcp-servers))."
+
+For the "references" field, also use the appropriate FULL URLs matching the question language.
 
 ## Escalation Format
 
@@ -74,11 +84,13 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
         ),
     )
 
+    prompt = SYSTEM_PROMPT.format(docs_base_url=settings.docs_base_url.rstrip("/"))
+
     agent = Agent(
         model,
         deps_type=AgentDeps,
         output_type=VocResponse,
-        instructions=SYSTEM_PROMPT,
+        instructions=prompt,
         retries=2,
     )
 

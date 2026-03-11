@@ -6,7 +6,7 @@ from src.config import Settings
 from src.agent import run_agent
 
 
-def format_output(response) -> str:
+def format_output(response, docs_base_url: str = "") -> str:
     """VocResponse를 사람이 읽기 좋은 형태로 포맷한다."""
     output_parts = []
 
@@ -18,7 +18,12 @@ def format_output(response) -> str:
         output_parts.append("")
         output_parts.append("### 참고 문서" if _is_korean(response.answer) else "### References")
         for ref in response.references:
-            output_parts.append(f"- [{ref.title}]({ref.url})")
+            url = ref.url
+            # 상대 경로인 경우 full URL로 변환
+            if url.startswith("/") and docs_base_url:
+                origin = docs_base_url.split("/docs")[0] if "/docs" in docs_base_url else docs_base_url
+                url = origin.rstrip("/") + url
+            output_parts.append(f"- [{ref.title}]({url})")
 
     # 에스컬레이션
     if response.escalation_needed:
@@ -54,7 +59,7 @@ async def async_main(title: str, body: str) -> None:
 
     try:
         response = await run_agent(settings, title, body)
-        print(format_output(response))
+        print(format_output(response, docs_base_url=settings.docs_base_url))
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

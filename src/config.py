@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # LLM
     llm_base_url: str = "http://localhost:9013/v1"
     llm_api_key: str = ""
-    llm_model: str = "qwen3.5:397b-cloud"
+    llm_model: str = "qwen3.5:cloud"
 
     # Agent
     agent_max_iterations: int = 15
