@@ -3,10 +3,12 @@ from urllib.parse import urlparse, urlunparse
 import httpx
 from bs4 import BeautifulSoup
 
+SSL_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
+
 
 async def list_doc_pages(docs_base_url: str) -> list[dict[str, str]]:
     """docs 사이트의 전체 페이지 목록을 반환한다."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=SSL_CA_BUNDLE) as client:
         response = await client.get(docs_base_url, follow_redirects=True)
         response.raise_for_status()
 
@@ -38,7 +40,7 @@ async def fetch_doc_page(docs_base_url: str, page_path: str) -> str:
     else:
         url = docs_base_url.rstrip("/") + "/" + page_path
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=SSL_CA_BUNDLE) as client:
         try:
             response = await client.get(url, follow_redirects=True)
             if response.status_code != 200:

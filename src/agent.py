@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+import httpx
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -7,6 +8,8 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from src.config import Settings
 from src.models import VocResponse
 from src.tools import list_doc_pages, fetch_doc_page, search_docs
+
+SSL_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
 
 
 SYSTEM_PROMPT = """\
@@ -117,11 +120,13 @@ class AgentDeps:
 
 
 def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
+    http_client = httpx.AsyncClient(verify=SSL_CA_BUNDLE)
     model = OpenAIChatModel(
         settings.llm_model,
         provider=OpenAIProvider(
             base_url=settings.llm_base_url,
             api_key=settings.llm_api_key,
+            http_client=http_client,
         ),
     )
 
