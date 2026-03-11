@@ -19,10 +19,17 @@ def format_output(response, docs_base_url: str = "") -> str:
         output_parts.append("### 참고 문서" if _is_korean(response.answer) else "### References")
         for ref in response.references:
             url = ref.url
-            # 상대 경로인 경우 full URL로 변환
-            if url.startswith("/") and docs_base_url:
-                origin = docs_base_url.split("/docs")[0] if "/docs" in docs_base_url else docs_base_url
-                url = origin.rstrip("/") + url
+            # full URL이 아닌 경우 docs_base_url 기반으로 변환
+            if not url.startswith("http") and docs_base_url:
+                base = docs_base_url.rstrip("/")
+                if url.startswith("/"):
+                    # 절대 경로 (e.g., /docs/cli) → origin + path
+                    from urllib.parse import urlparse
+                    parsed = urlparse(base)
+                    url = f"{parsed.scheme}://{parsed.netloc}{url}"
+                else:
+                    # 상대 경로 (e.g., cli) → base + / + path
+                    url = f"{base}/{url}"
             output_parts.append(f"- [{ref.title}]({url})")
 
     # 에스컬레이션

@@ -52,6 +52,23 @@ def test_format_output_full_url_passthrough():
     assert "http://localhost:4321/docs/cli" in output
 
 
+def test_format_output_production_url():
+    """운영 환경 URL 패턴 테스트."""
+    prod_base = "https://github.samsungds.net/pages/CodeAssistant/Open-Code-Docs"
+    response = VocResponse(
+        answer="MCP 서버를 설정할 수 있습니다.",
+        references=[
+            Reference(title="MCP Servers", url=f"{prod_base}/mcp-servers"),
+            Reference(title="Config", url="config"),  # 상대 경로
+        ],
+        confidence="sufficient",
+        escalation_needed=False,
+    )
+    output = format_output(response, docs_base_url=prod_base)
+    assert f"[MCP Servers]({prod_base}/mcp-servers)" in output
+    assert f"[Config]({prod_base}/config)" in output
+
+
 def test_format_output_escalation():
     response = VocResponse(
         answer="문서만으로는 확인할 수 없습니다.",
