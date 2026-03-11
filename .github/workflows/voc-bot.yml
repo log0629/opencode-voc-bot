@@ -20,9 +20,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
       - name: Check if commenter is admin
         if: github.event_name == 'issue_comment'
         id: admin_check
@@ -41,6 +38,10 @@ jobs:
           else
             echo "is_admin=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Install dependencies
+        if: github.event_name == 'issues' || steps.admin_check.outputs.is_admin != 'true'
+        run: pip install -r requirements.txt
 
       - name: Run VOC Bot (new issue)
         if: github.event_name == 'issues'
