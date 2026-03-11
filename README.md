@@ -187,6 +187,7 @@ Bot은 3가지 카테고리의 Issue를 처리합니다:
 |---|---|---|
 | **Bug Report** | CodeMate with OpenCode 버전, OS, 설명, 스크린샷 | 트러블슈팅/알려진 이슈 문서 우선 검색. 문서에 없으면 에스컬레이션. |
 | **Enhancement Request** | 설명, 스크린샷 | 기존 기능 존재 여부 확인. 없으면 에스컬레이션. |
+| **Firewall Request** | Requester Name, Knox-ID, Source IP Range (Class C) | 문서 검색 없이 즉시 응답. 3영업일 내 처리 안내 + 에스컬레이션. |
 | **Questions** | 질문 | 문서 전체 검색 후 답변. |
 
 ## 기술 스택
