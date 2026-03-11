@@ -23,6 +23,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Check if commenter is admin
+        if: github.event_name == 'issue_comment'
+        id: admin_check
+        env:
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          ADMINS=$(python3 -c "
+          import configparser
+          c = configparser.ConfigParser()
+          c.read('config.ini')
+          print(c['ASSIGNEES']['users'])
+          ")
+          if echo "$ADMINS" | grep -qw "$COMMENT_USER"; then
+            echo "is_admin=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: $COMMENT_USER is an admin"
+          else
+            echo "is_admin=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run VOC Bot (new issue)
         if: github.event_name == 'issues'
         env:
@@ -39,7 +58,7 @@ jobs:
             > response.txt || true
 
       - name: Run VOC Bot (follow-up comment)
-        if: github.event_name == 'issue_comment'
+        if: github.event_name == 'issue_comment' && steps.admin_check.outputs.is_admin != 'true'
         env:
           LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
@@ -56,6 +75,7 @@ jobs:
             > response.txt || true
 
       - name: Comment on issue
+        if: github.event_name == 'issues' || steps.admin_check.outputs.is_admin != 'true'
         env:
           BOT_PAT: ${{ secrets.BOT_PAT }}
         run: |
@@ -82,13 +102,15 @@ jobs:
           print(random.choice(users))
           ")
           echo "Assigning to: $ASSIGNEE"
-          curl -s -X POST \
+          RESULT=$(curl -s -X POST \
             -H "Authorization: token $BOT_PAT" \
             -H "Accept: application/vnd.github+json" \
             "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees" \
-            -d "{\"assignees\": [\"${ASSIGNEE}\"]}" || true
+            -d "{\"assignees\": [\"${ASSIGNEE}\"]}")
+          echo "Assign result: $RESULT"
 
       - name: Add label if escalation needed
+        if: github.event_name == 'issues' || steps.admin_check.outputs.is_admin != 'true'
         env:
           BOT_PAT: ${{ secrets.BOT_PAT }}
         run: |
