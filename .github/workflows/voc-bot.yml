@@ -58,6 +58,27 @@ jobs:
             -R ${{ github.repository }} \
             -F response.txt
 
+      - name: Assign random user (new issue only)
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          USERS=$(python -c "
+          import configparser
+          c = configparser.ConfigParser()
+          c.read('config.ini')
+          print(c['ASSIGNEES']['users'])
+          ")
+          ASSIGNEE=$(python -c "
+          import random
+          users = [u.strip() for u in '$USERS'.split(',')]
+          print(random.choice(users))
+          ")
+          echo "Assigning to: $ASSIGNEE"
+          gh issue edit ${{ github.event.issue.number }} \
+            -R ${{ github.repository }} \
+            --add-assignee "$ASSIGNEE" || true
+
       - name: Add label if escalation needed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
