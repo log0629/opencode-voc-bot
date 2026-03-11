@@ -53,11 +53,23 @@ def _is_korean(text: str) -> bool:
     return any("\uac00" <= ch <= "\ud7a3" for ch in text)
 
 
-async def async_main(title: str, body: str) -> None:
-    settings = Settings()
+async def async_main(args) -> None:
+    # CLI 인자가 있으면 override, 없으면 .env/환경변수에서 로드
+    overrides = {}
+    if args.llm_base_url:
+        overrides["llm_base_url"] = args.llm_base_url
+    if args.llm_api_key:
+        overrides["llm_api_key"] = args.llm_api_key
+    if args.llm_model:
+        overrides["llm_model"] = args.llm_model
+    if args.docs_base_url:
+        overrides["docs_base_url"] = args.docs_base_url
+
+    settings = Settings(**overrides)
+
     print("=== VOC Bot Agent ===")
-    print(f"Issue Title: {title}")
-    print(f"Issue Body: {body[:100]}{'...' if len(body) > 100 else ''}")
+    print(f"Issue Title: {args.title}")
+    print(f"Issue Body: {args.body[:100]}{'...' if len(args.body) > 100 else ''}")
     print(f"Docs URL: {settings.docs_base_url}")
     print(f"LLM: {settings.llm_model} @ {settings.llm_base_url}")
     print("=====================\n")
@@ -65,7 +77,7 @@ async def async_main(title: str, body: str) -> None:
     print("Analyzing issue and searching documentation...\n")
 
     try:
-        response = await run_agent(settings, title, body)
+        response = await run_agent(settings, args.title, args.body)
         print(format_output(response, docs_base_url=settings.docs_base_url))
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -76,9 +88,13 @@ def main():
     parser = argparse.ArgumentParser(description="VOC Bot - GitHub Issue Auto-responder")
     parser.add_argument("--title", "-t", required=True, help="GitHub issue title")
     parser.add_argument("--body", "-b", required=True, help="GitHub issue body")
+    parser.add_argument("--llm-base-url", help="LLM API base URL (e.g., https://api.example.com/v1)")
+    parser.add_argument("--llm-api-key", help="LLM API key")
+    parser.add_argument("--llm-model", help="LLM model ID (e.g., qwen3.5:cloud)")
+    parser.add_argument("--docs-base-url", help="Docs site base URL")
     args = parser.parse_args()
 
-    asyncio.run(async_main(args.title, args.body))
+    asyncio.run(async_main(args))
 
 
 if __name__ == "__main__":
