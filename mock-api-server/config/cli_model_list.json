@@ -1,0 +1,146 @@
+{
+  "codemate": {
+    "id": "codemate",
+    "name": "Code Mate",
+    "env": [
+      "INTERNAL_API_KEY"
+    ],
+    "api": "http://localhost:9013/v1",
+    "npm": "@ai-sdk/openai-compatible",
+    "models": {
+      "glm-4.7:cloud": {
+        "id": "glm-4.7:cloud",
+        "name": "GLM4.7",
+        "reasoning": true,
+        "tool_call": true,
+        "limit": {
+          "context": 100000,
+          "output": 28000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "qwen3-next:80b": {
+        "id": "qwen3-next:80b",
+        "name": "Qwen3 Next 80B",
+        "reasoning": true,
+        "tool_call": true,
+        "limit": {
+          "context": 128000,
+          "output": 32000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "ministral-3:14b-cloud": {
+        "id": "ministral-3:14b-cloud",
+        "name": "Ministral 3 14B",
+        "reasoning": false,
+        "tool_call": true,
+        "limit": {
+          "context": 128000,
+          "output": 16000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "minimax-m2.1:cloud": {
+        "id": "minimax-m2.1:cloud",
+        "name": "MiniMax M2.1",
+        "reasoning": true,
+        "tool_call": true,
+        "limit": {
+          "context": 200000,
+          "output": 32000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "kimi-k2:1t-cloud": {
+        "id": "kimi-k2:1t-cloud",
+        "name": "Kimi K2 1T",
+        "reasoning": true,
+        "tool_call": true,
+        "limit": {
+          "context": 131072,
+          "output": 32000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "DSllmOCoder": {
+        "id": "DSllmOCoder",
+        "name": "DSllmO-Coder",
+        "reasoning": true,
+        "tool_call": true,
+        "interleaved": {
+          "field": "reasoning_content"
+        },
+        "limit": {
+          "context": 128000,
+          "output": 32000
+        },
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      },
+      "DSllmOCoderStable": {
+        "id": "DSllmOCoderStable",
+        "name": "DSllmO-Coder Stable",
+        "reasoning": true,
+        "tool_call": true,
+        "interleaved": {
+          "field": "reasoning_content"
+        },
+        "limit": {
+          "context": 200000,
+          "output": 32000
+        },
+        "modalities": {
+          "input": [
+            "text"
+          ],
+          "output": [
+            "text"
+          ]
+        }
+      }
+    }
+  }
+}
