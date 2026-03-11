@@ -153,12 +153,22 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
     return agent
 
 
-async def run_agent(settings: Settings, title: str, body: str) -> VocResponse:
+async def run_agent(
+    settings: Settings, title: str, body: str, comment: str = ""
+) -> VocResponse:
     """issue 제목과 본문으로 agent를 실행하여 답변을 생성한다."""
     agent = create_agent(settings)
     deps = AgentDeps(settings=settings)
 
-    user_message = f"GitHub Issue Title: {title}\n\nGitHub Issue Body:\n{body}"
+    if comment:
+        user_message = (
+            f"GitHub Issue Title: {title}\n\n"
+            f"GitHub Issue Body:\n{body}\n\n"
+            f"---\n"
+            f"Follow-up Comment (answer THIS question based on the issue context above):\n{comment}"
+        )
+    else:
+        user_message = f"GitHub Issue Title: {title}\n\nGitHub Issue Body:\n{body}"
 
     result = await agent.run(user_message, deps=deps)
     return result.output

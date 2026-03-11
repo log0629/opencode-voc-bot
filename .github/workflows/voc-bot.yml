@@ -1,0 +1,69 @@
+name: VOC Bot - Auto Response
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  respond:
+    runs-on: ubuntu-latest
+    # bot 자신의 코멘트는 무시 (무한 루프 방지)
+    if: >
+      (github.event_name == 'issues') ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login != 'github-actions[bot]')
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run VOC Bot (new issue)
+        if: github.event_name == 'issues'
+        env:
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          DOCS_BASE_URL: ${{ secrets.DOCS_BASE_URL }}
+        run: |
+          python -m src.main \
+            -t "${{ github.event.issue.title }}" \
+            -b "${{ github.event.issue.body }}" \
+            > response.txt 2>&1 || true
+
+      - name: Run VOC Bot (follow-up comment)
+        if: github.event_name == 'issue_comment'
+        env:
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          DOCS_BASE_URL: ${{ secrets.DOCS_BASE_URL }}
+        run: |
+          python -m src.main \
+            -t "${{ github.event.issue.title }}" \
+            -b "${{ github.event.issue.body }}" \
+            -c "${{ github.event.comment.body }}" \
+            > response.txt 2>&1 || true
+
+      - name: Comment on issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            -R ${{ github.repository }} \
+            -F response.txt
+
+      - name: Add label if escalation needed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q "Confidence: insufficient" response.txt; then
+            gh issue edit ${{ github.event.issue.number }} \
+              -R ${{ github.repository }} \
+              --add-label "needs-human-review" || true
+          fi

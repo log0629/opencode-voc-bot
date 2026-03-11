@@ -74,10 +74,12 @@ async def async_main(args) -> None:
     print(f"LLM: {settings.llm_model} @ {settings.llm_base_url}")
     print("=====================\n")
 
+    if args.comment:
+        print(f"Follow-up Comment: {args.comment[:100]}{'...' if len(args.comment) > 100 else ''}")
     print("Analyzing issue and searching documentation...\n")
 
     try:
-        response = await run_agent(settings, args.title, args.body)
+        response = await run_agent(settings, args.title, args.body, comment=args.comment or "")
         print(format_output(response, docs_base_url=settings.docs_base_url))
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -92,6 +94,7 @@ def main():
     parser.add_argument("--llm-api-key", help="LLM API key")
     parser.add_argument("--llm-model", help="LLM model ID (e.g., qwen3.5:cloud)")
     parser.add_argument("--docs-base-url", help="Docs site base URL")
+    parser.add_argument("--comment", "-c", help="Follow-up comment to respond to")
     args = parser.parse_args()
 
     asyncio.run(async_main(args))
