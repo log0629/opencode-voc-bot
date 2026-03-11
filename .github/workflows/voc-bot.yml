@@ -20,6 +20,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Setup gh for GitHub Enterprise
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --hostname "${{ github.server_url }}" --with-token
+        env:
+          GH_PROMPT_DISABLED: true
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 
@@ -51,16 +56,17 @@ jobs:
             > response.txt 2>&1 || true
 
       - name: Comment on issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BODY=$(cat response.txt | python -c "import sys,json; print(json.dumps(sys.stdin.read()))")
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
-            -d "{\"body\": ${BODY}}"
+          gh issue comment ${{ github.event.issue.number }} \
+            -R ${{ github.repository }} \
+            -F response.txt
 
       - name: Assign random user (new issue only)
         if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ASSIGNEE=$(python -c "
           import configparser, random
@@ -70,18 +76,16 @@ jobs:
           print(random.choice(users))
           ")
           echo "Assigning to: $ASSIGNEE"
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees" \
-            -d "{\"assignees\": [\"${ASSIGNEE}\"]}" || true
+          gh issue edit ${{ github.event.issue.number }} \
+            -R ${{ github.repository }} \
+            --add-assignee "$ASSIGNEE" || true
 
       - name: Add label if escalation needed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if grep -q "Confidence: insufficient" response.txt; then
-            curl -s -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github+json" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels" \
-              -d '{"labels": ["needs-human-review"]}' || true
+            gh issue edit ${{ github.event.issue.number }} \
+              -R ${{ github.repository }} \
+              --add-label "needs-human-review" || true
           fi
