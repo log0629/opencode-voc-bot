@@ -59,8 +59,11 @@ jobs:
         env:
           BOT_PAT: ${{ secrets.BOT_PAT }}
         run: |
+          if [ ! -s response.txt ]; then
+            echo "⚠️ VOC Bot 응답을 생성하지 못했습니다. 담당자의 확인이 필요합니다." > response.txt
+          fi
           BODY=$(python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))" < response.txt)
-          curl -sf -X POST \
+          curl -s -X POST \
             -H "Authorization: token $BOT_PAT" \
             -H "Accept: application/vnd.github+json" \
             "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
@@ -79,7 +82,7 @@ jobs:
           print(random.choice(users))
           ")
           echo "Assigning to: $ASSIGNEE"
-          curl -sf -X POST \
+          curl -s -X POST \
             -H "Authorization: token $BOT_PAT" \
             -H "Accept: application/vnd.github+json" \
             "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees" \
@@ -90,7 +93,7 @@ jobs:
           BOT_PAT: ${{ secrets.BOT_PAT }}
         run: |
           if grep -q "Confidence: insufficient" response.txt; then
-            curl -sf -X POST \
+            curl -s -X POST \
               -H "Authorization: token $BOT_PAT" \
               -H "Accept: application/vnd.github+json" \
               "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels" \
