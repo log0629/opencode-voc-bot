@@ -15,15 +15,13 @@ jobs:
       (github.event_name == 'issue_comment' && github.event.comment.user.login != 'codemate')
     permissions:
       issues: write
+    env:
+      GH_TOKEN: ${{ secrets.BOT_PAT }}
+      GH_HOST: github.samsungds.net
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Setup gh for GitHub Enterprise
-        run: echo "${{ secrets.BOT_PAT }}" | gh auth login --hostname github.samsungds.net --with-token
-        env:
-          GH_PROMPT_DISABLED: true
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -61,8 +59,6 @@ jobs:
             > response.txt 2>&1 || true
 
       - name: Comment on issue
-        env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
           gh issue comment ${{ github.event.issue.number }} \
             -R ${{ github.repository }} \
@@ -70,8 +66,6 @@ jobs:
 
       - name: Assign random user (new issue only)
         if: github.event_name == 'issues'
-        env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
           ASSIGNEE=$(python3 -c "
           import configparser, random
@@ -86,8 +80,6 @@ jobs:
             --add-assignee "$ASSIGNEE" || true
 
       - name: Add label if escalation needed
-        env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
           if grep -q "Confidence: insufficient" response.txt; then
             gh issue edit ${{ github.event.issue.number }} \
