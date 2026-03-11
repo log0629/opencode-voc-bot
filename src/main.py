@@ -67,16 +67,16 @@ async def async_main(args) -> None:
 
     settings = Settings(**overrides)
 
-    print("=== VOC Bot Agent ===")
-    print(f"Issue Title: {args.title}")
-    print(f"Issue Body: {args.body[:100]}{'...' if len(args.body) > 100 else ''}")
-    print(f"Docs URL: {settings.docs_base_url}")
-    print(f"LLM: {settings.llm_model} @ {settings.llm_base_url}")
-    print("=====================\n")
+    print("=== VOC Bot Agent ===", file=sys.stderr)
+    print(f"Issue Title: {args.title}", file=sys.stderr)
+    print(f"Issue Body: {args.body[:100]}{'...' if len(args.body) > 100 else ''}", file=sys.stderr)
+    print(f"Docs URL: {settings.docs_base_url}", file=sys.stderr)
+    print(f"LLM: {settings.llm_model} @ {settings.llm_base_url}", file=sys.stderr)
+    print("=====================\n", file=sys.stderr)
 
     if args.comment:
-        print(f"Follow-up Comment: {args.comment[:100]}{'...' if len(args.comment) > 100 else ''}")
-    print("Analyzing issue and searching documentation...\n")
+        print(f"Follow-up Comment: {args.comment[:100]}{'...' if len(args.comment) > 100 else ''}", file=sys.stderr)
+    print("Analyzing issue and searching documentation...\n", file=sys.stderr)
 
     try:
         response = await run_agent(settings, args.title, args.body, comment=args.comment or "")

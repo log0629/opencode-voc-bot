@@ -36,7 +36,7 @@ jobs:
           python3 -m src.main \
             -t "$ISSUE_TITLE" \
             -b "$ISSUE_BODY" \
-            > response.txt 2>&1 || true
+            > response.txt || true
 
       - name: Run VOC Bot (follow-up comment)
         if: github.event_name == 'issue_comment'
@@ -53,7 +53,7 @@ jobs:
             -t "$ISSUE_TITLE" \
             -b "$ISSUE_BODY" \
             -c "$COMMENT_BODY" \
-            > response.txt 2>&1 || true
+            > response.txt || true
 
       - name: Comment on issue
         env:
