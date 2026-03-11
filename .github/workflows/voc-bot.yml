@@ -35,10 +35,12 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
           DOCS_BASE_URL: ${{ secrets.DOCS_BASE_URL }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           python -m src.main \
-            -t "${{ github.event.issue.title }}" \
-            -b "${{ github.event.issue.body }}" \
+            -t "$ISSUE_TITLE" \
+            -b "$ISSUE_BODY" \
             > response.txt 2>&1 || true
 
       - name: Run VOC Bot (follow-up comment)
@@ -48,11 +50,14 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
           DOCS_BASE_URL: ${{ secrets.DOCS_BASE_URL }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           python -m src.main \
-            -t "${{ github.event.issue.title }}" \
-            -b "${{ github.event.issue.body }}" \
-            -c "${{ github.event.comment.body }}" \
+            -t "$ISSUE_TITLE" \
+            -b "$ISSUE_BODY" \
+            -c "$COMMENT_BODY" \
             > response.txt 2>&1 || true
 
       - name: Comment on issue
