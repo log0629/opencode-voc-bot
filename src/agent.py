@@ -120,7 +120,7 @@ class AgentDeps:
 
 
 def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
-    http_client = httpx.AsyncClient(verify=SSL_CA_BUNDLE)
+    http_client = httpx.AsyncClient(verify=False)
     model = OpenAIChatModel(
         settings.llm_model,
         provider=OpenAIProvider(
