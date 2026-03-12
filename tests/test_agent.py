@@ -1,8 +1,25 @@
 import pytest
 
-from src.agent import create_agent, AgentDeps, SYSTEM_PROMPT
+from src.agent import create_agent, AgentDeps, SYSTEM_PROMPT, _is_korean
 from src.config import Settings
 from src.models import VocResponse
+
+
+def test_is_korean_detection():
+    assert _is_korean("MCP 서버 설정 방법") is True
+    assert _is_korean("How to configure MCP") is False
+
+
+def test_agent_deps_docs_url_korean():
+    settings = Settings(llm_api_key="test-key")
+    deps = AgentDeps(settings=settings, docs_url="http://localhost:4321/docs")
+    assert deps.docs_url == "http://localhost:4321/docs"
+
+
+def test_agent_deps_docs_url_english():
+    settings = Settings(llm_api_key="test-key")
+    deps = AgentDeps(settings=settings, docs_url="http://localhost:4321/docs/en")
+    assert deps.docs_url == "http://localhost:4321/docs/en"
 
 
 def test_agent_creates_successfully():

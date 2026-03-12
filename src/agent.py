@@ -115,9 +115,15 @@ When escalation is needed:
 """
 
 
+def _is_korean(text: str) -> bool:
+    """텍스트에 한글이 포함되어 있는지 판단한다."""
+    return any("\uac00" <= ch <= "\ud7a3" for ch in text)
+
+
 @dataclass
 class AgentDeps:
     settings: Settings
+    docs_url: str = ""
     fetched_pages: set[str] = field(default_factory=set)
 
 
@@ -145,7 +151,7 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
     @agent.tool
     async def tool_list_doc_pages(ctx: RunContext[AgentDeps]) -> str:
         """Get the list of all available documentation pages. Call this first to see what docs exist."""
-        pages = await list_doc_pages(ctx.deps.settings.docs_base_url)
+        pages = await list_doc_pages(ctx.deps.docs_url)
         lines = [f"- {p['title']}: {p['path']}" for p in pages]
         return "Available documentation pages:\n" + "\n".join(lines)
 
@@ -155,7 +161,7 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
         if page_path in ctx.deps.fetched_pages:
             return f"[Already fetched: {page_path}. Use the content from the previous fetch.]"
 
-        content = await fetch_doc_page(ctx.deps.settings.docs_base_url, page_path)
+        content = await fetch_doc_page(ctx.deps.docs_url, page_path)
         if not content:
             return f"[Page not found or empty: {page_path}]"
 
@@ -165,8 +171,8 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
     @agent.tool
     async def tool_search_docs(ctx: RunContext[AgentDeps], keyword: str) -> str:
         """Search documentation pages by keyword. Returns pages whose title or content contains the keyword."""
-        pages = await list_doc_pages(ctx.deps.settings.docs_base_url)
-        results = await search_docs(ctx.deps.settings.docs_base_url, pages, keyword)
+        pages = await list_doc_pages(ctx.deps.docs_url)
+        results = await search_docs(ctx.deps.docs_url, pages, keyword)
 
         if not results:
             return f"No pages found matching keyword: '{keyword}'"
@@ -182,7 +188,16 @@ async def run_agent(
 ) -> VocResponse:
     """issue 제목과 본문으로 agent를 실행하여 답변을 생성한다."""
     agent = create_agent(settings)
-    deps = AgentDeps(settings=settings)
+
+    # 질문 언어에 따라 docs URL 결정
+    question_text = f"{title} {body} {comment}"
+    base_url = settings.docs_base_url.rstrip("/")
+    if _is_korean(question_text):
+        docs_url = base_url
+    else:
+        docs_url = f"{base_url}/en"
+
+    deps = AgentDeps(settings=settings, docs_url=docs_url)
 
     if comment:
         user_message = (
