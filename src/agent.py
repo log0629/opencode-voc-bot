@@ -31,6 +31,20 @@ from GitHub issues based STRICTLY on the official documentation.
    In Korean: use "~하시기 바랍니다", "~을 참고해 주세요" style. \
    In English: use "Please refer to...", "We recommend..." style.
 
+## Documentation Language
+
+The documentation site has two language versions:
+- Korean docs: {docs_base_url} (default, no prefix)
+- English docs: {docs_base_url}/en
+
+**CRITICAL**: You MUST determine the user's question language FIRST, then use the \
+matching documentation version:
+- Korean question → use tool_list_doc_pages(lang="ko") and tool_fetch_doc_page(lang="ko", ...)
+- English question → use tool_list_doc_pages(lang="en") and tool_fetch_doc_page(lang="en", ...)
+
+Always fetch documentation in the same language as the user's question. \
+This ensures your answer is based on the correct language version of the docs.
+
 ## Issue Categories
 
 GitHub issues come in four categories. Identify the category from the issue content \
@@ -71,20 +85,21 @@ Fields: Question
 
 ## Workflow
 
-1. First, call tool_list_doc_pages to see all available documentation pages.
-2. Identify the issue category (Bug Report, Enhancement Request, Firewall Request, or Question).
+1. First, determine the user's question language (Korean or English).
+2. Call tool_list_doc_pages with the appropriate lang parameter to see available docs.
+3. Identify the issue category (Bug Report, Enhancement Request, Firewall Request, or Question).
    - If it is a Firewall Request, skip all tool calls and respond immediately with the \
      acknowledgment message. Set escalation_needed to true and confidence to "insufficient".
-3. Identify which pages are likely relevant to the user's issue.
-4. Fetch the most relevant pages using tool_fetch_doc_page.
-5. After each page, assess: "Do I have enough evidence to answer fully?"
+4. Identify which pages are likely relevant to the user's issue.
+5. Fetch the most relevant pages using tool_fetch_doc_page with the correct lang parameter.
+6. After each page, assess: "Do I have enough evidence to answer fully?"
    - If YES: generate the answer.
    - If NO: fetch the next relevant page.
-6. If you need to find pages by keyword, use tool_search_docs.
-7. When you have sufficient evidence, produce the final answer with:
+7. If you need to find pages by keyword, use tool_search_docs with the correct lang parameter.
+8. When you have sufficient evidence, produce the final answer with:
    - Inline citations linking to the relevant docs pages
    - A references list at the bottom
-8. If evidence is insufficient after checking all relevant pages, clearly state that \
+9. If evidence is insufficient after checking all relevant pages, clearly state that \
    the documentation does not cover this topic and set escalation_needed to true.
 
 ## Answer Format
@@ -115,16 +130,18 @@ When escalation is needed:
 """
 
 
-def _is_korean(text: str) -> bool:
-    """텍스트에 한글이 포함되어 있는지 판단한다."""
-    return any("\uac00" <= ch <= "\ud7a3" for ch in text)
-
-
 @dataclass
 class AgentDeps:
     settings: Settings
-    docs_url: str = ""
     fetched_pages: set[str] = field(default_factory=set)
+
+
+def _resolve_docs_url(base_url: str, lang: str) -> str:
+    """lang 파라미터에 따라 docs URL을 반환한다."""
+    base = base_url.rstrip("/")
+    if lang == "en":
+        return f"{base}/en"
+    return base
 
 
 def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
@@ -149,19 +166,23 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
     )
 
     @agent.tool
-    async def tool_list_doc_pages(ctx: RunContext[AgentDeps]) -> str:
-        """Get the list of all available documentation pages. Call this first to see what docs exist."""
-        pages = await list_doc_pages(ctx.deps.docs_url)
+    async def tool_list_doc_pages(ctx: RunContext[AgentDeps], lang: str = "ko") -> str:
+        """Get the list of all available documentation pages. Call this first to see what docs exist.
+        Use lang='ko' for Korean docs, lang='en' for English docs. Choose based on the user's question language."""
+        docs_url = _resolve_docs_url(ctx.deps.settings.docs_base_url, lang)
+        pages = await list_doc_pages(docs_url)
         lines = [f"- {p['title']}: {p['path']}" for p in pages]
-        return "Available documentation pages:\n" + "\n".join(lines)
+        return f"Available documentation pages ({lang}):\n" + "\n".join(lines)
 
     @agent.tool
-    async def tool_fetch_doc_page(ctx: RunContext[AgentDeps], page_path: str) -> str:
-        """Fetch the full content of a specific documentation page. Provide the page path like '/docs/cli'."""
+    async def tool_fetch_doc_page(ctx: RunContext[AgentDeps], page_path: str, lang: str = "ko") -> str:
+        """Fetch the full content of a specific documentation page. Provide the page path like '/docs/cli'.
+        Use lang='ko' for Korean docs, lang='en' for English docs. Choose based on the user's question language."""
         if page_path in ctx.deps.fetched_pages:
             return f"[Already fetched: {page_path}. Use the content from the previous fetch.]"
 
-        content = await fetch_doc_page(ctx.deps.docs_url, page_path)
+        docs_url = _resolve_docs_url(ctx.deps.settings.docs_base_url, lang)
+        content = await fetch_doc_page(docs_url, page_path)
         if not content:
             return f"[Page not found or empty: {page_path}]"
 
@@ -169,16 +190,18 @@ def create_agent(settings: Settings) -> Agent[AgentDeps, VocResponse]:
         return f"Content of {page_path}:\n\n{content}"
 
     @agent.tool
-    async def tool_search_docs(ctx: RunContext[AgentDeps], keyword: str) -> str:
-        """Search documentation pages by keyword. Returns pages whose title or content contains the keyword."""
-        pages = await list_doc_pages(ctx.deps.docs_url)
-        results = await search_docs(ctx.deps.docs_url, pages, keyword)
+    async def tool_search_docs(ctx: RunContext[AgentDeps], keyword: str, lang: str = "ko") -> str:
+        """Search documentation pages by keyword. Returns pages whose title or content contains the keyword.
+        Use lang='ko' for Korean docs, lang='en' for English docs. Choose based on the user's question language."""
+        docs_url = _resolve_docs_url(ctx.deps.settings.docs_base_url, lang)
+        pages = await list_doc_pages(docs_url)
+        results = await search_docs(docs_url, pages, keyword)
 
         if not results:
             return f"No pages found matching keyword: '{keyword}'"
 
         lines = [f"- {r['title']}: {r['path']}" for r in results]
-        return f"Pages matching '{keyword}':\n" + "\n".join(lines)
+        return f"Pages matching '{keyword}' ({lang}):\n" + "\n".join(lines)
 
     return agent
 
@@ -188,16 +211,7 @@ async def run_agent(
 ) -> VocResponse:
     """issue 제목과 본문으로 agent를 실행하여 답변을 생성한다."""
     agent = create_agent(settings)
-
-    # 질문 언어에 따라 docs URL 결정
-    question_text = f"{title} {body} {comment}"
-    base_url = settings.docs_base_url.rstrip("/")
-    if _is_korean(question_text):
-        docs_url = base_url
-    else:
-        docs_url = f"{base_url}/en"
-
-    deps = AgentDeps(settings=settings, docs_url=docs_url)
+    deps = AgentDeps(settings=settings)
 
     if comment:
         user_message = (

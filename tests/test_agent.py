@@ -1,25 +1,20 @@
 import pytest
 
-from src.agent import create_agent, AgentDeps, SYSTEM_PROMPT, _is_korean
+from src.agent import create_agent, AgentDeps, SYSTEM_PROMPT, _resolve_docs_url
 from src.config import Settings
 from src.models import VocResponse
 
 
-def test_is_korean_detection():
-    assert _is_korean("MCP 서버 설정 방법") is True
-    assert _is_korean("How to configure MCP") is False
+def test_resolve_docs_url_korean():
+    assert _resolve_docs_url("http://localhost:4321/docs", "ko") == "http://localhost:4321/docs"
 
 
-def test_agent_deps_docs_url_korean():
-    settings = Settings(llm_api_key="test-key")
-    deps = AgentDeps(settings=settings, docs_url="http://localhost:4321/docs")
-    assert deps.docs_url == "http://localhost:4321/docs"
+def test_resolve_docs_url_english():
+    assert _resolve_docs_url("http://localhost:4321/docs", "en") == "http://localhost:4321/docs/en"
 
 
-def test_agent_deps_docs_url_english():
-    settings = Settings(llm_api_key="test-key")
-    deps = AgentDeps(settings=settings, docs_url="http://localhost:4321/docs/en")
-    assert deps.docs_url == "http://localhost:4321/docs/en"
+def test_resolve_docs_url_strips_trailing_slash():
+    assert _resolve_docs_url("http://localhost:4321/docs/", "en") == "http://localhost:4321/docs/en"
 
 
 def test_agent_creates_successfully():
@@ -42,6 +37,7 @@ def test_agent_system_prompt_contains_key_rules():
     assert "SAME LANGUAGE" in SYSTEM_PROMPT
     assert "escalation_needed" in SYSTEM_PROMPT
     assert "inline" in SYSTEM_PROMPT.lower()
+    assert "lang" in SYSTEM_PROMPT
 
 
 def test_agent_deps_defaults():
