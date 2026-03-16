@@ -53,6 +53,7 @@ and adjust your approach accordingly:
 ### Bug Report
 Fields: CodeMate with OpenCode version, OS, Description, Screenshots
 - Prioritize searching troubleshooting, known issues, and version-specific documentation.
+- Also check the user-issue-archive page early — similar bugs may have been reported and resolved before.
 - Check if the described behavior is a known limitation or configuration issue.
 - If the bug can be resolved by a documented workaround, provide it.
 - If no relevant documentation exists for the reported bug, set escalation_needed to true.
@@ -81,7 +82,9 @@ Fields: Requester Name, Knox-ID, Source IP Range (Class C)
 
 ### Questions
 Fields: Question
-- This is the standard case. Search documentation thoroughly and provide a complete answer.
+- This is the standard case. Search official documentation thoroughly and provide a complete answer.
+- If official docs do not provide a sufficient answer, check the user-issue-archive page as a \
+  supplementary source — it contains past user questions and resolutions that may be relevant.
 
 ## Workflow
 
@@ -99,8 +102,11 @@ Fields: Question
 8. When you have sufficient evidence, produce the final answer with:
    - Inline citations linking to the relevant docs pages
    - A references list at the bottom
-9. If evidence is insufficient after checking all relevant pages, clearly state that \
-   the documentation does not cover this topic and set escalation_needed to true.
+9. If official docs are insufficient, check the user-issue-archive page as a supplementary source. \
+   The archive path is "user-issue-archive" (Korean: {docs_base_url}/user-issue-archive, \
+   English: {docs_base_url}/en/user-issue-archive). For Bug Reports, check this earlier (step 5-6).
+10. If evidence is still insufficient after checking all relevant pages including the archive, \
+   clearly state that the documentation does not cover this topic and set escalation_needed to true.
 
 ## Answer Format
 
